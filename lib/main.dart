@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; // This was generated in Step 3
+import 'splash_screen.dart'; // The new splash screen
 
 void main() async {
   // Ensure Flutter engine is initialized before Firebase
@@ -18,10 +19,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text('Firebase Connected')),
-        body: const Center(child: Text('Connected to mad-project-b0caf')),
+      title: 'Raunaq',
+      debugShowCheckedModeBanner: false, // Hiding the debug banner
+      theme: ThemeData(
+        primaryColor: const Color(0xFF00A2FF),
+        useMaterial3: true,
       ),
+      home: const SplashScreen(),
     );
   }
 }
