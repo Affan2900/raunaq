@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "447099267570",
+    "project_id": "mad-project-b0caf",
+    "storage_bucket": "mad-project-b0caf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:447099267570:android:7fbdf21d45ac9e65ee636b",
+        "android_client_info": {
+          "package_name": "com.example.raunaq"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "447099267570-uet9cqehhreemp76bb8hmvu85djtsi9n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCrOx_ROhHWZpGWRlmYFGF--vZkXNcGtw0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "447099267570-uet9cqehhreemp76bb8hmvu85djtsi9n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "447099267570-i65ujnjq2kau0jil00g3j480e4uenhte.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "revodev.evemanager"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:447099267570:android:3b19f9512fc278d7ee636b",
+        "android_client_info": {
+          "package_name": "revodev.evemanager"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "447099267570-uet9cqehhreemp76bb8hmvu85djtsi9n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCrOx_ROhHWZpGWRlmYFGF--vZkXNcGtw0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "447099267570-uet9cqehhreemp76bb8hmvu85djtsi9n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "447099267570-i65ujnjq2kau0jil00g3j480e4uenhte.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "revodev.evemanager"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
