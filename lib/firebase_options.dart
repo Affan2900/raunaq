@@ -41,50 +41,52 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyChw9rF6V-hwRbQpV_-q5_hPa5kE-JW3ik',
-    appId: '1:447099267570:web:14c84282d0223403ee636b',
-    messagingSenderId: '447099267570',
-    projectId: 'mad-project-b0caf',
-    authDomain: 'mad-project-b0caf.firebaseapp.com',
-    storageBucket: 'mad-project-b0caf.firebasestorage.app',
-    measurementId: 'G-PWV0FN231D',
+    apiKey: 'AIzaSyAPIFxqs7-gOxE-YEap0NRoQPtJHu_PxWg',
+    appId: '1:803135336104:web:fb7180b4adb2217f8d5c9d',
+    messagingSenderId: '803135336104',
+    projectId: 'raunaq-3d044',
+    authDomain: 'raunaq-3d044.firebaseapp.com',
+    databaseURL: 'https://raunaq-3d044-default-rtdb.firebaseio.com',
+    storageBucket: 'raunaq-3d044.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCrOx_ROhHWZpGWRlmYFGF--vZkXNcGtw0',
-    appId: '1:447099267570:android:7fbdf21d45ac9e65ee636b',
-    messagingSenderId: '447099267570',
-    projectId: 'mad-project-b0caf',
-    storageBucket: 'mad-project-b0caf.firebasestorage.app',
+    apiKey: 'AIzaSyBKI66hI0wQLnq9jrGcSUjoVTQJv1ZrGyA',
+    appId: '1:803135336104:android:456e4a41e2909a9e8d5c9d',
+    messagingSenderId: '803135336104',
+    projectId: 'raunaq-3d044',
+    databaseURL: 'https://raunaq-3d044-default-rtdb.firebaseio.com',
+    storageBucket: 'raunaq-3d044.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBnF52mcMXO8ZpT9fn3GkfdBR_rISvhDhg',
-    appId: '1:447099267570:ios:f213c144cfbb8e8cee636b',
-    messagingSenderId: '447099267570',
-    projectId: 'mad-project-b0caf',
-    storageBucket: 'mad-project-b0caf.firebasestorage.app',
-    iosClientId: '447099267570-onev9o5hhtok3v6hl6bh69h18m4op9mr.apps.googleusercontent.com',
+    apiKey: 'AIzaSyBKjjg3f4li7dsTpv_EotIcd1aZ4DaqeRA',
+    appId: '1:803135336104:ios:1916492f8414dc8a8d5c9d',
+    messagingSenderId: '803135336104',
+    projectId: 'raunaq-3d044',
+    databaseURL: 'https://raunaq-3d044-default-rtdb.firebaseio.com',
+    storageBucket: 'raunaq-3d044.firebasestorage.app',
     iosBundleId: 'com.example.raunaq',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBnF52mcMXO8ZpT9fn3GkfdBR_rISvhDhg',
-    appId: '1:447099267570:ios:f213c144cfbb8e8cee636b',
-    messagingSenderId: '447099267570',
-    projectId: 'mad-project-b0caf',
-    storageBucket: 'mad-project-b0caf.firebasestorage.app',
-    iosClientId: '447099267570-onev9o5hhtok3v6hl6bh69h18m4op9mr.apps.googleusercontent.com',
+    apiKey: 'AIzaSyBKjjg3f4li7dsTpv_EotIcd1aZ4DaqeRA',
+    appId: '1:803135336104:ios:1916492f8414dc8a8d5c9d',
+    messagingSenderId: '803135336104',
+    projectId: 'raunaq-3d044',
+    databaseURL: 'https://raunaq-3d044-default-rtdb.firebaseio.com',
+    storageBucket: 'raunaq-3d044.firebasestorage.app',
     iosBundleId: 'com.example.raunaq',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyChw9rF6V-hwRbQpV_-q5_hPa5kE-JW3ik',
-    appId: '1:447099267570:web:b1ef8360b8743fccee636b',
-    messagingSenderId: '447099267570',
-    projectId: 'mad-project-b0caf',
-    authDomain: 'mad-project-b0caf.firebaseapp.com',
-    storageBucket: 'mad-project-b0caf.firebasestorage.app',
-    measurementId: 'G-XMBSDG7L2L',
+    apiKey: 'AIzaSyAPIFxqs7-gOxE-YEap0NRoQPtJHu_PxWg',
+    appId: '1:803135336104:web:d042b2a42ff7078b8d5c9d',
+    messagingSenderId: '803135336104',
+    projectId: 'raunaq-3d044',
+    authDomain: 'raunaq-3d044.firebaseapp.com',
+    databaseURL: 'https://raunaq-3d044-default-rtdb.firebaseio.com',
+    storageBucket: 'raunaq-3d044.firebasestorage.app',
   );
+
 }

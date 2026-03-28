@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:raunaq/profile_page.dart';
 import 'package:raunaq/messages_screen.dart';
 import 'package:raunaq/venues_screen.dart';
+import 'package:raunaq/generic_category_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,11 +14,24 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  static const primaryColor = Color(0xFF00A2FF);
+
+  // Get the first name of the logged-in user from Firebase
+  String get _firstName {
+    final name = FirebaseAuth.instance.currentUser?.displayName ?? '';
+    if (name.isEmpty) return 'there';
+    return name.split(' ').first;
+  }
+
+  // Build a unique chat ID from two user UIDs.
+  // Sorting ensures the ID is always the same regardless of who opens it.
+  String _buildChatId(String uid1, String uid2) {
+    final ids = [uid1, uid2]..sort();
+    return '${ids[0]}_${ids[1]}';
+  }
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF00A2FF); // Light blue color
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -25,11 +40,13 @@ class _HomeScreenState extends State<HomeScreen> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         title: const Text(
-          'Home Screen',
+          'Raunaq',
           style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+            color: primaryColor,
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            fontStyle: FontStyle.italic,
+            letterSpacing: 1,
           ),
         ),
         actions: [
@@ -37,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ProfilePage()),
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
               );
             },
             icon: const Icon(Icons.person_outline, color: Colors.black),
@@ -46,18 +63,16 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: SafeArea(
-        // Use ScrollConfiguration to hide the scrollbar
         child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+          behavior:
+              ScrollConfiguration.of(context).copyWith(scrollbars: false),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20.0,
-              vertical: 10.0,
-            ),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Hero Banner
+                // ── Hero Banner ──
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
@@ -65,10 +80,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: primaryColor,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
+                        'Hi, $_firstName! 👋',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
                         'Plan Your Dream Event',
                         style: TextStyle(
                           color: Colors.white,
@@ -76,8 +100,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 8),
-                      Text(
+                      const SizedBox(height: 8),
+                      const Text(
                         'Everything you need in one place',
                         style: TextStyle(
                           color: Colors.white,
@@ -90,89 +114,129 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Categories Title
+                // ── Categories ──
                 const Text(
                   'Categories',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
 
-                // Categories Grid
                 GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisCount: 3,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 1.0, // Make them square
+                  childAspectRatio: 1.0,
                   children: [
                     _buildCategoryItem(
                       '🏛️',
                       'Venues',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const VenuesScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const VenuesScreen()),
+                      ),
                     ),
-                    _buildCategoryItem('🍽️', 'Catering'),
-                    _buildCategoryItem('📸', 'Photography'),
-                    _buildCategoryItem('🎨', 'Decoration'),
-                    _buildCategoryItem('🎵', 'Music'),
-                    _buildCategoryItem('📋', 'Planning'),
+                    _buildCategoryItem(
+                      '🍽️',
+                      'Catering',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const CateringScreen()),
+                      ),
+                    ),
+                    _buildCategoryItem(
+                      '📸',
+                      'Photography',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const PhotographyScreen()),
+                      ),
+                    ),
+                    _buildCategoryItem(
+                      '🎨',
+                      'Decoration',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const DecorationScreen()),
+                      ),
+                    ),
+                    _buildCategoryItem(
+                      '🎵',
+                      'Music',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const MusicScreen()),
+                      ),
+                    ),
+                    _buildCategoryItem(
+                      '📋',
+                      'Planning',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const PlanningScreen()),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 28),
 
-                // Recommended for You Title
+                // ── Recommended ──
                 const Text(
                   'Recommended for You',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
 
-                // Recommended List
                 SizedBox(
-                  height: 220, // Height for the horizontal list
+                  height: 220,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
                       _buildRecommendedCard(
-                        'Sunset Garden Venue',
-                        '4.8',
-                        r'$$$',
-                      ),
+                          'Sunset Garden Venue', '4.8', 'PKR 350K'),
                       const SizedBox(width: 16),
                       _buildRecommendedCard(
-                        'Royal Crown Hotel',
-                        '4.9',
-                        r'$$$$',
-                      ),
+                          'Royal Crown Hotel', '4.9', 'PKR 500K'),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24), // Extra space at the bottom
+                const SizedBox(height: 24),
               ],
             ),
           ),
         ),
       ),
+
+      // ── Bottom Navigation ──
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
           if (index == 3) {
-            // Navigate to Messages screen
+            // Messages tab — open a support chat as a demo
+            // When you have real vendors from Firestore, replace 'support'
+            // with the vendor's UID
+            final myUid =
+                FirebaseAuth.instance.currentUser?.uid ?? 'guest';
+            final chatId = _buildChatId(myUid, 'support');
+
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const MessagesScreen()),
+              MaterialPageRoute(
+                builder: (_) => MessagesScreen(
+                  chatId: chatId,
+                  peerName: 'Support',
+                ),
+              ),
             );
           } else {
-            setState(() {
-              _selectedIndex = index;
-            });
+            setState(() => _selectedIndex = index);
           }
         },
         type: BottomNavigationBarType.fixed,
@@ -180,14 +244,10 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedItemColor: primaryColor,
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w500,
-          fontSize: 12,
-        ),
+        selectedLabelStyle:
+            const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+        unselectedLabelStyle:
+            const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
         elevation: 10,
         items: const [
           BottomNavigationBarItem(
@@ -200,7 +260,10 @@ class _HomeScreenState extends State<HomeScreen> {
             activeIcon: Icon(Icons.work),
             label: 'Vendors',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Explore'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Explore',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),
             activeIcon: Icon(Icons.chat_bubble),
@@ -211,12 +274,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategoryItem(String emoji, String title, {VoidCallback? onTap}) {
+  Widget _buildCategoryItem(String emoji, String title,
+      {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFF8F9FA), // Very light grey backround
+          color: const Color(0xFFF8F9FA),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -226,7 +290,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -242,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04), // Soft shadow
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -251,12 +316,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image placeholder
           Expanded(
             child: Container(
               width: double.infinity,
               decoration: const BoxDecoration(
-                color: Color(0xFF89CFF0), // Light blue placeholder
+                color: Color(0xFF89CFF0),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -267,7 +331,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          // Content
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
@@ -276,9 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
+                      fontWeight: FontWeight.bold, fontSize: 14),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -288,24 +349,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const Icon(Icons.star,
+                            color: Colors.amber, size: 16),
                         const SizedBox(width: 4),
-                        Text(
-                          rating,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                        Text(rating,
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500)),
                       ],
                     ),
                     Text(
                       price,
                       style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black54,
-                      ),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54),
                     ),
                   ],
                 ),

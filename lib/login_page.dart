@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:raunaq/home_screen.dart';
+import 'package:raunaq/signup_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -9,21 +11,110 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  static const primaryColor = Color(0xFF00A2FF);
+
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
-  Widget build(BuildContext context) {
-    const primaryColor = Color(
-      0xFF00A2FF,
-    ); // Light blue color matching the design
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
+  // ── Firebase login ──────────────────────────────────────────────────────────
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Please enter your email and password.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      if (!mounted) return;
+      // Navigate and remove all previous routes so Back doesn't go to Login
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (_) => false,
+      );
+    } on FirebaseAuthException catch (e) {
+      _showError(_friendlyError(e.code));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ── Firebase password reset ─────────────────────────────────────────────────
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      _showError('Enter your email above first, then tap Forgot Password.');
+      return;
+    }
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password reset email sent. Check your inbox.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      _showError(_friendlyError(e.code));
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade700,
+      ),
+    );
+  }
+
+  String _friendlyError(String code) {
+    switch (code) {
+      case 'user-not-found':
+        return 'No account found for this email.';
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Incorrect email or password.';
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many failed attempts. Please try again later.';
+      default:
+        return 'Login failed. Please try again.';
+    }
+  }
+
+  // ── UI ──────────────────────────────────────────────────────────────────────
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: primaryColor,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            // Top Section
+            // ── Top branding ──
             Expanded(
               flex: 3,
               child: Center(
@@ -47,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
                       'Raunaq',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 32, // slightly larger, was 28
+                        fontSize: 32,
                         fontWeight: FontWeight.w900,
                         fontStyle: FontStyle.italic,
                         letterSpacing: 2,
@@ -67,7 +158,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            // Bottom Section (Form)
+            // ── Form ──
             Expanded(
               flex: 5,
               child: Container(
@@ -95,7 +186,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 32),
 
-                      // Email Address Input
+                      // Email
                       const Text(
                         'Email Address',
                         style: TextStyle(
@@ -106,7 +197,9 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 8),
                       TextField(
+                        controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
                           hintText: 'your.email@example.com',
                           hintStyle: const TextStyle(color: Colors.black38),
@@ -120,14 +213,13 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                          ),
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 16),
                         ),
                       ),
                       const SizedBox(height: 20),
 
-                      // Password Input
+                      // Password
                       const Text(
                         'Password',
                         style: TextStyle(
@@ -138,7 +230,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 8),
                       TextField(
+                        controller: _passwordController,
                         obscureText: _obscurePassword,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _login(),
                         decoration: InputDecoration(
                           hintText: 'Enter your password',
                           hintStyle: const TextStyle(color: Colors.black38),
@@ -153,11 +248,8 @@ class _LoginPageState extends State<LoginPage> {
                                   : Icons.visibility_outlined,
                               color: Colors.black45,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
+                            onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword),
                           ),
                           filled: true,
                           fillColor: Colors.grey[50],
@@ -165,19 +257,17 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                          ),
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 16),
                         ),
                       ),
-
                       const SizedBox(height: 8),
 
-                      // Forgot Password Link
+                      // Forgot password
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: _resetPassword,
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: const Size(50, 30),
@@ -192,22 +282,14 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 24),
 
-                      // Login Button
+                      // Login button
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const HomeScreen(),
-                              ),
-                            );
-                          },
+                          onPressed: _isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryColor,
                             foregroundColor: Colors.white,
@@ -216,19 +298,27 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             elevation: 0,
                           ),
-                          child: const Text(
-                            'Login',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
-
                       const SizedBox(height: 24),
 
-                      // Sign Up Text
+                      // Sign up link
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -240,7 +330,14 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           GestureDetector(
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const SignupPage(),
+                                ),
+                              );
+                            },
                             child: const Text(
                               'Sign Up',
                               style: TextStyle(
@@ -250,36 +347,6 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ],
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Demo Notice container
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 16,
-                          horizontal: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F9FF), // Very light blue
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('💡 ', style: TextStyle(fontSize: 16)),
-                            Text(
-                              'Demo: Use any email and password to login',
-                              style: TextStyle(
-                                color: Color(
-                                  0xFF0077B6,
-                                ), // Slightly darker blue for text
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ],
                   ),
