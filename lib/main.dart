@@ -29,9 +29,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// Listens to Firebase auth state.
-/// Sends already-logged-in users straight to HomeScreen,
-/// new / logged-out users to LoginPage.
+/// Listens to Firebase auth state and routes accordingly.
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
