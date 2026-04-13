@@ -21,16 +21,9 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: true,
+        backgroundColor: Colors.white, elevation: 0, scrolledUnderElevation: 0, centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black,
-            size: 20,
-          ),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -149,11 +142,11 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildProfileListItem({
+  Widget _menuItem({
     required IconData icon,
     required String title,
     required Color iconColor,
-    required Color backgroundColor,
+    required Color bgColor,
     Color textColor = Colors.black87,
     bool isDestructive = false,
     VoidCallback? onTap,
