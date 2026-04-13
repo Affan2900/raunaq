@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:raunaq/profile_page.dart';
-import 'package:raunaq/conversations_screen.dart';
-import 'package:raunaq/vendor_list_screen.dart';
-import 'package:raunaq/vendor_dashboard_screen.dart';
-import 'package:raunaq/vendor_detail_screen.dart';
+import 'package:raunaq/messages_screen.dart';
+import 'package:raunaq/venues_screen.dart';
+import 'package:raunaq/catering_screen.dart';
+import 'package:raunaq/photography_screen.dart';
+import 'package:raunaq/decoration_screen.dart';
+import 'package:raunaq/music_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,29 +18,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  static const primaryColor = Color(0xFF00A2FF);
-  String _userRole = 'client';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserRole();
-  }
-
-  Future<void> _loadUserRole() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    if (doc.exists && mounted) {
-      setState(() => _userRole = doc.data()?['role'] ?? 'client');
-    }
-  }
-
-  String get _firstName {
-    final name = FirebaseAuth.instance.currentUser?.displayName ?? '';
-    if (name.isEmpty) return 'there';
-    return name.split(' ').first;
-  }
+  int _hoveredIndex = -1;
 
   @override
   Widget build(BuildContext context) {
@@ -105,12 +85,71 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisSpacing: 12,
                   childAspectRatio: 1.0,
                   children: [
-                    _categoryTile('🏛️', 'Venues', 'venue'),
-                    _categoryTile('🍽️', 'Catering', 'catering'),
-                    _categoryTile('📸', 'Photography', 'photography'),
-                    _categoryTile('🎨', 'Decoration', 'decoration'),
-                    _categoryTile('🎵', 'Music', 'music'),
-                    _categoryTile('📋', 'Planning', 'planning'),
+                    _buildCategoryItem(
+                      0,
+                      '🏛️',
+                      'Venues',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const VenuesScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildCategoryItem(
+                      1,
+                      '🍽️',
+                      'Catering',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CateringScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildCategoryItem(
+                      2,
+                      '📸',
+                      'Photography',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PhotographyScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildCategoryItem(
+                      3,
+                      '🎨',
+                      'Decoration',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DecorationScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildCategoryItem(
+                      4,
+                      '🎵',
+                      'Music',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MusicScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
                 const SizedBox(height: 28),
@@ -158,19 +197,60 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _categoryTile(String emoji, String label, String category) {
-    return GestureDetector(
-      onTap: () => Navigator.push(
-          context, MaterialPageRoute(builder: (_) => VendorListScreen(category: category))),
-      child: Container(
-        decoration: BoxDecoration(color: const Color(0xFFF8F9FA), borderRadius: BorderRadius.circular(16)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 28)),
-            const SizedBox(height: 8),
-            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-          ],
+  Widget _buildCategoryItem(
+    int index,
+    String emoji,
+    String title, {
+    VoidCallback? onTap,
+  }) {
+    bool isHovered = _hoveredIndex == index;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredIndex = index),
+      onExit: (_) => setState(() => _hoveredIndex = -1),
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            color: isHovered
+                ? const Color(0xFFE5F5FF)
+                : const Color(0xFFF8F9FA),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: isHovered
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedScale(
+                scale: isHovered ? 1.2 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: Text(emoji, style: const TextStyle(fontSize: 28)),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

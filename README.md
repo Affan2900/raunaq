@@ -1,16 +1,31 @@
-# raunaq
+# Raunaq
 
-A new Flutter project.
+Raunaq is a dynamic event planning application built with Flutter and Firebase. It serves as a marketplace for event services, allowing users to browse categories like Venues, Catering, Music, Decoration, and Photography.
+
+### Features
+- **Authentication**: Secure Login and Sign-Up integrated with Firebase Auth.
+- **Dynamic Content**: Service listings managed through Cloud Firestore.
+- **Role-Based Views**: Owners can manage (Add/Delete) their specific listings, while users can browse and register for services.
+- **Real-time Bookings**: Users can register for services with preferred dates and times.
+- **Responsive Animations**: A premium UI experience with animated transitions and interactive elements.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+To run this project locally, follow these steps:
 
-A few resources to get you started if this is your first Flutter project:
+1. **Install Dependencies**:
+   Open your terminal in the project root and run:
+   ```bash
+   flutter pub get
+   ```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+2. **Launch the App**:
+   Ensure you have a simulator running or a device connected, then run:
+   ```bash
+   flutter run
+   ```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+3. **Firebase Configuration**:
+   This project requires a `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) to connect to the Firebase backend. Ensure these are placed in their respective platform directories.
+
+For more help getting started with Flutter development, view the [online documentation](https://docs.flutter.dev/).
