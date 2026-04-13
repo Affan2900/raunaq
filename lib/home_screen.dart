@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:raunaq/profile_page.dart';
 import 'package:raunaq/messages_screen.dart';
 import 'package:raunaq/venues_screen.dart';
+import 'package:raunaq/catering_screen.dart';
+import 'package:raunaq/photography_screen.dart';
+import 'package:raunaq/decoration_screen.dart';
+import 'package:raunaq/music_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,6 +16,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  int _hoveredIndex = -1;
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   childAspectRatio: 1.0, // Make them square
                   children: [
                     _buildCategoryItem(
+                      0,
                       '🏛️',
                       'Venues',
                       onTap: () {
@@ -118,11 +124,58 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                     ),
-                    _buildCategoryItem('🍽️', 'Catering'),
-                    _buildCategoryItem('📸', 'Photography'),
-                    _buildCategoryItem('🎨', 'Decoration'),
-                    _buildCategoryItem('🎵', 'Music'),
-                    _buildCategoryItem('📋', 'Planning'),
+                    _buildCategoryItem(
+                      1,
+                      '🍽️',
+                      'Catering',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CateringScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildCategoryItem(
+                      2,
+                      '📸',
+                      'Photography',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PhotographyScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildCategoryItem(
+                      3,
+                      '🎨',
+                      'Decoration',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DecorationScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildCategoryItem(
+                      4,
+                      '🎵',
+                      'Music',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MusicScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
                 const SizedBox(height: 28),
@@ -211,24 +264,60 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategoryItem(String emoji, String title, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8F9FA), // Very light grey backround
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 28)),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-            ),
-          ],
+  Widget _buildCategoryItem(
+    int index,
+    String emoji,
+    String title, {
+    VoidCallback? onTap,
+  }) {
+    bool isHovered = _hoveredIndex == index;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredIndex = index),
+      onExit: (_) => setState(() => _hoveredIndex = -1),
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            color: isHovered
+                ? const Color(0xFFE5F5FF)
+                : const Color(0xFFF8F9FA),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: isHovered
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedScale(
+                scale: isHovered ? 1.2 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: Text(emoji, style: const TextStyle(fontSize: 28)),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,69 +1,193 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class VenuesScreen extends StatelessWidget {
+class VenuesScreen extends StatefulWidget {
   const VenuesScreen({super.key});
+
+  @override
+  State<VenuesScreen> createState() => _VenuesScreenState();
+}
+
+class _VenuesScreenState extends State<VenuesScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String? _currentUserEmail = FirebaseAuth.instance.currentUser?.email;
+
+  void _showAddVenueDialog(BuildContext context) {
+    if (_currentUserEmail == null) return;
+
+    final nameController = TextEditingController();
+    final locationController = TextEditingController();
+    final priceController = TextEditingController();
+    final capacityController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add New Venue'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Venue Name'),
+              ),
+              TextField(
+                controller: locationController,
+                decoration: const InputDecoration(labelText: 'Location'),
+              ),
+              TextField(
+                controller: priceController,
+                decoration: const InputDecoration(
+                  labelText: 'Price (e.g. PKR 100k)',
+                ),
+              ),
+              TextField(
+                controller: capacityController,
+                decoration: const InputDecoration(
+                  labelText: 'Capacity (e.g. 200 Guests)',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isNotEmpty) {
+                await _firestore
+                    .collection('categories')
+                    .doc('venues')
+                    .collection('items')
+                    .add({
+                      'name': nameController.text,
+                      'location': locationController.text,
+                      'price': priceController.text,
+                      'capacity': capacityController.text,
+                      'rating': 0.0,
+                      'reviews': 0,
+                      'emoji': '🏛️',
+                      'ownerEmail':
+                          _currentUserEmail, // Associate with current user
+                      'created_at': FieldValue.serverTimestamp(),
+                    });
+                if (context.mounted) Navigator.pop(context);
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteVenue(String docId) async {
+    await _firestore
+        .collection('categories')
+        .doc('venues')
+        .collection('items')
+        .doc(docId)
+        .delete();
+  }
+
+  void _showRegisterDialog(
+    BuildContext context,
+    String venueId,
+    String venueName,
+  ) {
+    DateTime? selectedDate;
+    TimeOfDay? selectedTime;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Register for $venueName'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text(
+                  selectedDate == null
+                      ? 'Select Date'
+                      : 'Date: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}',
+                ),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (date != null) setState(() => selectedDate = date);
+                },
+              ),
+              ListTile(
+                title: Text(
+                  selectedTime == null
+                      ? 'Select Time'
+                      : 'Time: ${selectedTime!.format(context)}',
+                ),
+                trailing: const Icon(Icons.access_time),
+                onTap: () async {
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.now(),
+                  );
+                  if (time != null) setState(() => selectedTime = time);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: (selectedDate != null && selectedTime != null)
+                  ? () async {
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user != null) {
+                        await _firestore.collection('registrations').add({
+                          'userId': user.uid,
+                          'userEmail': user.email,
+                          'category': 'venues',
+                          'itemId': venueId,
+                          'itemName': venueName,
+                          'date': selectedDate,
+                          'time': selectedTime!.format(context),
+                          'timestamp': FieldValue.serverTimestamp(),
+                        });
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Registration successful!'),
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  : null,
+              child: const Text('Confirm'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF00A2FF);
-
-    // Mock venue data
-    final List<Map<String, dynamic>> venues = [
-      {
-        'name': 'Sunset Garden Venue',
-        'location': 'DHA Phase 6, Lahore',
-        'rating': 4.8,
-        'reviews': 124,
-        'price': 'PKR 350,000',
-        'capacity': '200-500 guests',
-        'emoji': '🌅',
-      },
-      {
-        'name': 'Royal Crown Banquet',
-        'location': 'Gulberg III, Lahore',
-        'rating': 4.9,
-        'reviews': 203,
-        'price': 'PKR 500,000',
-        'capacity': '300-800 guests',
-        'emoji': '👑',
-      },
-      {
-        'name': 'Pearl Continental Hall',
-        'location': 'Mall Road, Lahore',
-        'rating': 4.7,
-        'reviews': 312,
-        'price': 'PKR 600,000',
-        'capacity': '250-600 guests',
-        'emoji': '🏨',
-      },
-      {
-        'name': 'Jasmine Lawn & Marquee',
-        'location': 'Bahria Town, Lahore',
-        'rating': 4.5,
-        'reviews': 89,
-        'price': 'PKR 250,000',
-        'capacity': '150-400 guests',
-        'emoji': '🌿',
-      },
-      {
-        'name': 'The Grand Mughal',
-        'location': 'Johar Town, Lahore',
-        'rating': 4.6,
-        'reviews': 156,
-        'price': 'PKR 450,000',
-        'capacity': '200-700 guests',
-        'emoji': '🕌',
-      },
-      {
-        'name': 'Rosewood Farm House',
-        'location': 'Bedian Road, Lahore',
-        'rating': 4.4,
-        'reviews': 67,
-        'price': 'PKR 180,000',
-        'capacity': '100-300 guests',
-        'emoji': '🌹',
-      },
-    ];
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -84,6 +208,12 @@ class VenuesScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: () => _showAddVenueDialog(context),
+            icon: const Icon(Icons.add_circle_outline, color: primaryColor),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -96,8 +226,9 @@ class VenuesScreen extends StatelessWidget {
                 color: const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const TextField(
-                decoration: InputDecoration(
+              child: TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
                   hintText: 'Search venues...',
                   hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
                   border: InputBorder.none,
@@ -109,64 +240,118 @@ class VenuesScreen extends StatelessWidget {
           ),
           const SizedBox(height: 4),
 
-          // Results count
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${venues.length} venues found',
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Row(
+          // StreamBuilder for real-time data
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore
+                  .collection('categories')
+                  .doc('venues')
+                  .collection('items')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Something went wrong'));
+                }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final docs = snapshot.data!.docs;
+                if (docs.isEmpty) {
+                  return const Center(child: Text('No venues found'));
+                }
+
+                return Column(
                   children: [
-                    const Icon(Icons.tune, color: Colors.grey, size: 18),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Filters',
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${docs.length} venues found',
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(
+                          context,
+                        ).copyWith(scrollbars: false),
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          itemCount: docs.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            final doc = docs[index];
+                            final data = doc.data() as Map<String, dynamic>;
+                            final String ownerEmail = data['ownerEmail'] ?? '';
+                            final bool isOwner =
+                                _currentUserEmail != null &&
+                                ownerEmail == _currentUserEmail;
+
+                            return GestureDetector(
+                              onTap: () {
+                                // For Normal Users, show registration dialog or navigate
+                                if (!isOwner) {
+                                  _showRegisterDialog(
+                                    context,
+                                    doc.id,
+                                    data['name'],
+                                  );
+                                }
+                              },
+                              child: Stack(
+                                children: [
+                                  _buildVenueCard(
+                                    name: data['name'] ?? 'Unknown',
+                                    location: data['location'] ?? 'No location',
+                                    rating: (data['rating'] ?? 0.0).toDouble(),
+                                    reviews: data['reviews'] ?? 0,
+                                    price: data['price'] ?? 'Contact for price',
+                                    capacity: data['capacity'] ?? 'N/A',
+                                    emoji: data['emoji'] ?? '🏛️',
+                                    primaryColor: primaryColor,
+                                  ),
+                                  if (isOwner)
+                                    Positioned(
+                                      top: 10,
+                                      right: 10,
+                                      child: IconButton(
+                                        onPressed: () => _deleteVenue(doc.id),
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red,
+                                        ),
+                                        style: IconButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Venue list
-          Expanded(
-            child: ScrollConfiguration(
-              behavior: ScrollConfiguration.of(
-                context,
-              ).copyWith(scrollbars: false),
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: venues.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 16),
-                itemBuilder: (context, index) {
-                  final venue = venues[index];
-                  return _buildVenueCard(
-                    name: venue['name'] as String,
-                    location: venue['location'] as String,
-                    rating: venue['rating'] as double,
-                    reviews: venue['reviews'] as int,
-                    price: venue['price'] as String,
-                    capacity: venue['capacity'] as String,
-                    emoji: venue['emoji'] as String,
-                    primaryColor: primaryColor,
-                  );
-                },
-              ),
+                );
+              },
             ),
           ),
         ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart'; // This was generated in Step 3
 import 'splash_screen.dart'; // The new splash screen
 
@@ -10,11 +11,11 @@ void main() async {
   // Initialize Firebase using the generated options for your specific platform
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(const MyApp());
+  runApp(const RaunaqApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class RaunaqApp extends StatelessWidget {
+  const RaunaqApp({super.key});
 
   @override
   Widget build(BuildContext context) {
