@@ -17,11 +17,12 @@ class _ProfilePageState extends State<ProfilePage> {
     final user = FirebaseAuth.instance.currentUser;
     final String email = user?.email ?? 'Not logged in';
     final String displayName = user?.displayName ?? 'Raunaq User';
+    const backgroundColor = Colors.white;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: backgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,

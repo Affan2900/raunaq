@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:raunaq/profile_page.dart';
 import 'package:raunaq/messages_screen.dart';
 import 'package:raunaq/venues_screen.dart';
@@ -6,6 +8,8 @@ import 'package:raunaq/catering_screen.dart';
 import 'package:raunaq/photography_screen.dart';
 import 'package:raunaq/decoration_screen.dart';
 import 'package:raunaq/music_screen.dart';
+import 'package:raunaq/add_event_plan_screen.dart';
+import 'package:raunaq/event_plan_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,25 +22,119 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   int _hoveredIndex = -1;
 
+  /// First name for greeting: [User.displayName], else email local-part, else fallback.
+  String _firstNameFromUser(User? user) {
+    final displayName = user?.displayName?.trim();
+    if (displayName != null && displayName.isNotEmpty) {
+      return displayName.split(RegExp(r'\s+')).first;
+    }
+    final email = user?.email?.trim();
+    if (email != null && email.contains('@')) {
+      final local = email.split('@').first;
+      if (local.isNotEmpty) return local;
+    }
+    return 'User';
+  }
+
+  Widget _buildCurrentPlansSection(BuildContext context) {
+    const primaryColor = Color(0xFF00A2FF);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Current Plans',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 220,
+          child: StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, authSnap) {
+              final uid =
+                  authSnap.data?.uid ?? FirebaseAuth.instance.currentUser?.uid;
+              if (uid == null) {
+                return ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [_buildAddPlanCard(context)],
+                );
+              }
+              return StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(uid)
+                    .collection('eventPlans')
+                    .snapshots(),
+                builder: (context, planSnap) {
+                  if (planSnap.hasError) {
+                    return ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [_buildAddPlanCard(context)],
+                    );
+                  }
+                  if (planSnap.connectionState == ConnectionState.waiting &&
+                      !planSnap.hasData) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: primaryColor),
+                    );
+                  }
+                  final docs = planSnap.data?.docs ?? [];
+                  final sorted = List<QueryDocumentSnapshot>.from(docs);
+                  sorted.sort((a, b) {
+                    final mapA = a.data() as Map<String, dynamic>?;
+                    final mapB = b.data() as Map<String, dynamic>?;
+                    final ta = mapA?['createdAt'];
+                    final tb = mapB?['createdAt'];
+                    if (ta is Timestamp && tb is Timestamp) {
+                      return tb.compareTo(ta);
+                    }
+                    return 0;
+                  });
+
+                  final rowChildren = <Widget>[];
+                  for (final doc in sorted) {
+                    final data = doc.data() as Map<String, dynamic>?;
+                    final raw = data?['planName']?.toString().trim();
+                    final title =
+                        raw != null && raw.isNotEmpty ? raw : 'Event plan';
+                    rowChildren.add(
+                      _buildCurrentPlanCard(
+                        context,
+                        planId: doc.id,
+                        planName: title,
+                      ),
+                    );
+                    rowChildren.add(const SizedBox(width: 16));
+                  }
+                  rowChildren.add(_buildAddPlanCard(context));
+
+                  return ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: rowChildren,
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF00A2FF); // Light blue color
+    const backgroundColor = Colors.white;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: backgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Home Screen',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        
         actions: [
           IconButton(
             onPressed: () {
@@ -62,36 +160,43 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Hero Banner
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Plan Your Dream Event',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                // User Greeting (reads Firebase Auth display name / email)
+                StreamBuilder<User?>(
+                  stream: FirebaseAuth.instance.authStateChanges(),
+                  builder: (context, snapshot) {
+                    final user = snapshot.data ?? FirebaseAuth.instance.currentUser;
+                    final firstName = _firstNameFromUser(user);
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: primaryColor,
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Everything you need in one place',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hi, $firstName! 👋',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Plan Your Dream Event',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
 
@@ -178,6 +283,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 28),
+
+                _buildCurrentPlansSection(context),
+
                 const SizedBox(height: 28),
 
                 // Recommended for You Title
@@ -319,6 +428,144 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAddPlanCard(BuildContext context) {
+    const primaryColor = Color(0xFF00A2FF);
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute<void>(
+            builder: (context) => const AddEventPlanScreen(),
+          ),
+        );
+      },
+      child: Container(
+        width: 100,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F9FA),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: primaryColor.withValues(alpha: 0.35),
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add, size: 44, color: primaryColor),
+            const SizedBox(height: 10),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                'New plan',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: primaryColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrentPlanCard(
+    BuildContext context, {
+    required String planId,
+    required String planName,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push<void>(
+          context,
+          MaterialPageRoute<void>(
+            builder: (context) => EventPlanDetailScreen(planId: planId),
+          ),
+        );
+      },
+      child: Container(
+      width: 200,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Color(0xFF89CFF0),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: const Center(
+                child: Text('📋', style: TextStyle(fontSize: 32)),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  planName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 16,
+                      color: Colors.green[700],
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Active',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
       ),
     );
   }
