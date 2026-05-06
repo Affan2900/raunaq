@@ -1,13 +1,39 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:raunaq/home_screen.dart';
+import 'package:raunaq/login_page.dart';
 import 'firebase_options.dart'; // This was generated in Step 3
 import 'splash_screen.dart'; // The new splash screen
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+
+  if (kIsWeb) {
+    final apiKey = dotenv.env['FIREBASE_WEB_API_KEY']?.trim() ?? '';
+    final projectId = dotenv.env['FIREBASE_PROJECT_ID']?.trim() ?? '';
+    if (apiKey.isEmpty || projectId.isEmpty) {
+      throw StateError(
+        'Web Firebase config is missing. Add FIREBASE_WEB_API_KEY and FIREBASE_PROJECT_ID '
+        '(and other keys) to your project root `.env`. See `.env.example` and copy values '
+        'from Firebase Console → Project settings → General → Your apps → Web.',
+      );
+    }
+  }
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Avoids intermittent Firestore JS "INTERNAL ASSERTION FAILED" (e.g. b815) on web
+  // tied to IndexedDB persistence / watch pipeline; OK to disable until SDK fixes land.
+  if (kIsWeb) {
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: false,
+    );
+  }
 
   runApp(const RaunaqApp());
 }

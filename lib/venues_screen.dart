@@ -369,6 +369,7 @@ class _VenuesScreenState extends State<VenuesScreen> {
     required String price,
     required String capacity,
     required String emoji,
+    required Color primaryColor,
   }) {
     return Container(
       decoration: BoxDecoration(

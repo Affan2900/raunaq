@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:raunaq/main.dart';
+import 'package:raunaq/login_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -41,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  _navigateToHome() async {
+  Future<void> _navigateToHome() async {
     // Wait for 2.5 seconds before navigating to the login page
     await Future.delayed(const Duration(milliseconds: 3000));
     if (!mounted) return;
