@@ -5,7 +5,6 @@ import 'package:raunaq/signup_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-
   @override
   State<LoginPage> createState() => _LoginPageState();
 }

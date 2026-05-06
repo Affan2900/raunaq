@@ -198,7 +198,8 @@ class _VenuesScreenState extends State<VenuesScreen> {
         centerTitle: true,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
+          icon: const Icon(Icons.arrow_back_ios,
+              color: Colors.black, size: 20),
         ),
         title: const Text(
           'Venues',
@@ -219,7 +220,8 @@ class _VenuesScreenState extends State<VenuesScreen> {
         children: [
           // Search bar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
@@ -367,7 +369,6 @@ class _VenuesScreenState extends State<VenuesScreen> {
     required String price,
     required String capacity,
     required String emoji,
-    required Color primaryColor,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -396,7 +397,8 @@ class _VenuesScreenState extends State<VenuesScreen> {
               ),
             ),
             child: Center(
-              child: Text(emoji, style: const TextStyle(fontSize: 48)),
+              child:
+                  Text(emoji, style: const TextStyle(fontSize: 48)),
             ),
           ),
 
@@ -406,7 +408,7 @@ class _VenuesScreenState extends State<VenuesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name & rating row
+                // Name + rating row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -423,7 +425,8 @@ class _VenuesScreenState extends State<VenuesScreen> {
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const Icon(Icons.star,
+                            color: Colors.amber, size: 16),
                         const SizedBox(width: 3),
                         Text(
                           '$rating',
@@ -435,9 +438,7 @@ class _VenuesScreenState extends State<VenuesScreen> {
                         Text(
                           ' ($reviews)',
                           style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
+                              fontSize: 12, color: Colors.grey),
                         ),
                       ],
                     ),
@@ -448,15 +449,13 @@ class _VenuesScreenState extends State<VenuesScreen> {
                 // Location
                 Row(
                   children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 15,
-                      color: Colors.grey[600],
-                    ),
+                    Icon(Icons.location_on_outlined,
+                        size: 15, color: Colors.grey[600]),
                     const SizedBox(width: 4),
                     Text(
                       location,
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                      style: TextStyle(
+                          fontSize: 13, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -465,21 +464,19 @@ class _VenuesScreenState extends State<VenuesScreen> {
                 // Capacity
                 Row(
                   children: [
-                    Icon(
-                      Icons.people_outline,
-                      size: 15,
-                      color: Colors.grey[600],
-                    ),
+                    Icon(Icons.people_outline,
+                        size: 15, color: Colors.grey[600]),
                     const SizedBox(width: 4),
                     Text(
                       capacity,
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                      style: TextStyle(
+                          fontSize: 13, color: Colors.grey[600]),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
 
-                // Price & button
+                // Price + button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -493,9 +490,7 @@ class _VenuesScreenState extends State<VenuesScreen> {
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
+                          horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
                         color: primaryColor,
                         borderRadius: BorderRadius.circular(20),

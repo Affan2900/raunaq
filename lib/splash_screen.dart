@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:raunaq/login_page.dart'; // import the login page
+import 'package:raunaq/main.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -62,17 +61,11 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF00A2FF); // Primary blue color
-
+    const primaryColor = Color(0xFF00A2FF);
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          // Linear gradient from top (primaryColor) to bottom (white)
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [primaryColor, Colors.white],
-          ),
+          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [primaryColor, Colors.white]),
         ),
         child: Center(
           child: FadeTransition(
