@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:raunaq/state/admin_mode_notifier.dart';
 
 class PhotographyScreen extends StatefulWidget {
   const PhotographyScreen({super.key});
@@ -78,6 +80,81 @@ class _PhotographyScreenState extends State<PhotographyScreen> {
         ],
       ),
     );
+  }
+
+  void _showEditPhotographyDialog(
+    BuildContext context,
+    String docId,
+    Map<String, dynamic> data,
+  ) {
+    if (_currentUserEmail == null) return;
+
+    final nameController =
+        TextEditingController(text: data['name']?.toString() ?? '');
+    final typeController =
+        TextEditingController(text: data['type']?.toString() ?? '');
+    final priceController =
+        TextEditingController(text: data['price']?.toString() ?? '');
+
+    void disposeControllers() {
+      nameController.dispose();
+      typeController.dispose();
+      priceController.dispose();
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Photographer'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Name / Studio'),
+              ),
+              TextField(
+                controller: typeController,
+                decoration: const InputDecoration(
+                  labelText: 'Service (e.g. Wedding, Event)',
+                ),
+              ),
+              TextField(
+                controller: priceController,
+                decoration: const InputDecoration(
+                  labelText: 'Package Price (e.g. PKR 75k)',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isNotEmpty) {
+                await _firestore
+                    .collection('categories')
+                    .doc('photography')
+                    .collection('items')
+                    .doc(docId)
+                    .update({
+                  'name': nameController.text.trim(),
+                  'type': typeController.text.trim(),
+                  'price': priceController.text.trim(),
+                });
+                if (context.mounted) Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    ).whenComplete(disposeControllers);
   }
 
   void _deletePhotography(String docId) async {
@@ -184,6 +261,7 @@ class _PhotographyScreenState extends State<PhotographyScreen> {
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF00A2FF);
+    final adminMode = context.watch<AdminModeNotifier>().isAdminView;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -203,10 +281,11 @@ class _PhotographyScreenState extends State<PhotographyScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () => _showAddPhotographyDialog(context),
-            icon: const Icon(Icons.add_circle_outline, color: primaryColor),
-          ),
+          if (adminMode && _currentUserEmail != null)
+            IconButton(
+              onPressed: () => _showAddPhotographyDialog(context),
+              icon: const Icon(Icons.add_circle_outline, color: primaryColor),
+            ),
         ],
       ),
       body: Column(
@@ -260,14 +339,16 @@ class _PhotographyScreenState extends State<PhotographyScreen> {
 
                     return GestureDetector(
                       onTap: () {
-                        if (!isOwner) {
+                        if (isOwner && adminMode) {
+                          _showEditPhotographyDialog(context, doc.id, data);
+                        } else if (!isOwner) {
                           _showRegisterDialog(context, doc.id, data['name']);
                         }
                       },
                       child: Stack(
                         children: [
                           _buildCard(data, primaryColor),
-                          if (isOwner)
+                          if (isOwner && adminMode)
                             Positioned(
                               top: 8,
                               right: 8,

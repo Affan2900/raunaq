@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:raunaq/state/admin_mode_notifier.dart';
 
 class CateringScreen extends StatefulWidget {
   const CateringScreen({super.key});
@@ -86,6 +88,91 @@ class _CateringScreenState extends State<CateringScreen> {
         ],
       ),
     );
+  }
+
+  void _showEditCateringDialog(
+    BuildContext context,
+    String docId,
+    Map<String, dynamic> data,
+  ) {
+    if (_currentUserEmail == null) return;
+
+    final nameController =
+        TextEditingController(text: data['name']?.toString() ?? '');
+    final specialtyController =
+        TextEditingController(text: data['specialty']?.toString() ?? '');
+    final priceController =
+        TextEditingController(text: data['price']?.toString() ?? '');
+    final capacityController =
+        TextEditingController(text: data['capacity']?.toString() ?? '');
+
+    void disposeControllers() {
+      nameController.dispose();
+      specialtyController.dispose();
+      priceController.dispose();
+      capacityController.dispose();
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Caterer'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Caterer Name'),
+              ),
+              TextField(
+                controller: specialtyController,
+                decoration: const InputDecoration(
+                  labelText: 'Specialty (e.g. Desi, Chinese)',
+                ),
+              ),
+              TextField(
+                controller: priceController,
+                decoration: const InputDecoration(
+                  labelText: 'Price per Head (e.g. PKR 1500)',
+                ),
+              ),
+              TextField(
+                controller: capacityController,
+                decoration: const InputDecoration(
+                  labelText: 'Capacity (e.g. 50-1000)',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isNotEmpty) {
+                await _firestore
+                    .collection('categories')
+                    .doc('catering')
+                    .collection('items')
+                    .doc(docId)
+                    .update({
+                  'name': nameController.text.trim(),
+                  'specialty': specialtyController.text.trim(),
+                  'price': priceController.text.trim(),
+                  'capacity': capacityController.text.trim(),
+                });
+                if (context.mounted) Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    ).whenComplete(disposeControllers);
   }
 
   void _deleteCaterer(String docId) async {
@@ -192,6 +279,7 @@ class _CateringScreenState extends State<CateringScreen> {
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF00A2FF);
+    final adminMode = context.watch<AdminModeNotifier>().isAdminView;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -211,10 +299,11 @@ class _CateringScreenState extends State<CateringScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () => _showAddCateringDialog(context),
-            icon: const Icon(Icons.add_circle_outline, color: primaryColor),
-          ),
+          if (adminMode && _currentUserEmail != null)
+            IconButton(
+              onPressed: () => _showAddCateringDialog(context),
+              icon: const Icon(Icons.add_circle_outline, color: primaryColor),
+            ),
         ],
       ),
       body: Column(
@@ -268,14 +357,16 @@ class _CateringScreenState extends State<CateringScreen> {
 
                     return GestureDetector(
                       onTap: () {
-                        if (!isOwner) {
+                        if (isOwner && adminMode) {
+                          _showEditCateringDialog(context, doc.id, data);
+                        } else if (!isOwner) {
                           _showRegisterDialog(context, doc.id, data['name']);
                         }
                       },
                       child: Stack(
                         children: [
                           _buildCard(data, primaryColor),
-                          if (isOwner)
+                          if (isOwner && adminMode)
                             Positioned(
                               top: 8,
                               right: 8,

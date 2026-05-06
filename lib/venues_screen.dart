@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:raunaq/state/admin_mode_notifier.dart';
 
 class VenuesScreen extends StatefulWidget {
   const VenuesScreen({super.key});
@@ -85,6 +87,89 @@ class _VenuesScreenState extends State<VenuesScreen> {
         ],
       ),
     );
+  }
+
+  void _showEditVenueDialog(
+    BuildContext context,
+    String docId,
+    Map<String, dynamic> data,
+  ) {
+    if (_currentUserEmail == null) return;
+
+    final nameController =
+        TextEditingController(text: data['name']?.toString() ?? '');
+    final locationController =
+        TextEditingController(text: data['location']?.toString() ?? '');
+    final priceController =
+        TextEditingController(text: data['price']?.toString() ?? '');
+    final capacityController =
+        TextEditingController(text: data['capacity']?.toString() ?? '');
+
+    void disposeControllers() {
+      nameController.dispose();
+      locationController.dispose();
+      priceController.dispose();
+      capacityController.dispose();
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Venue'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Venue Name'),
+              ),
+              TextField(
+                controller: locationController,
+                decoration: const InputDecoration(labelText: 'Location'),
+              ),
+              TextField(
+                controller: priceController,
+                decoration: const InputDecoration(
+                  labelText: 'Price (e.g. PKR 100k)',
+                ),
+              ),
+              TextField(
+                controller: capacityController,
+                decoration: const InputDecoration(
+                  labelText: 'Capacity (e.g. 200 Guests)',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isNotEmpty) {
+                await _firestore
+                    .collection('categories')
+                    .doc('venues')
+                    .collection('items')
+                    .doc(docId)
+                    .update({
+                  'name': nameController.text.trim(),
+                  'location': locationController.text.trim(),
+                  'price': priceController.text.trim(),
+                  'capacity': capacityController.text.trim(),
+                });
+                if (context.mounted) Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    ).whenComplete(disposeControllers);
   }
 
   void _deleteVenue(String docId) async {
@@ -188,6 +273,7 @@ class _VenuesScreenState extends State<VenuesScreen> {
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF00A2FF);
+    final adminMode = context.watch<AdminModeNotifier>().isAdminView;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -210,10 +296,11 @@ class _VenuesScreenState extends State<VenuesScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () => _showAddVenueDialog(context),
-            icon: const Icon(Icons.add_circle_outline, color: primaryColor),
-          ),
+          if (adminMode && _currentUserEmail != null)
+            IconButton(
+              onPressed: () => _showAddVenueDialog(context),
+              icon: const Icon(Icons.add_circle_outline, color: primaryColor),
+            ),
         ],
       ),
       body: Column(
@@ -308,8 +395,9 @@ class _VenuesScreenState extends State<VenuesScreen> {
 
                             return GestureDetector(
                               onTap: () {
-                                // For Normal Users, show registration dialog or navigate
-                                if (!isOwner) {
+                                if (isOwner && adminMode) {
+                                  _showEditVenueDialog(context, doc.id, data);
+                                } else if (!isOwner) {
                                   _showRegisterDialog(
                                     context,
                                     doc.id,
@@ -329,7 +417,7 @@ class _VenuesScreenState extends State<VenuesScreen> {
                                     emoji: data['emoji'] ?? '🏛️',
                                     primaryColor: primaryColor,
                                   ),
-                                  if (isOwner)
+                                  if (isOwner && adminMode)
                                     Positioned(
                                       top: 10,
                                       right: 10,

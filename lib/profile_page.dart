@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'package:raunaq/login_page.dart';
+import 'package:raunaq/state/admin_mode_notifier.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -103,18 +105,32 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 40),
 
-              _buildProfileListItem(
-                icon: Icons.person_outline,
-                title: 'Personal Info',
-                iconColor: const Color(0xFF00A2FF),
-                backgroundColor: const Color(0xFFE5F5FF),
-              ),
-              const SizedBox(height: 16),
-              _buildProfileListItem(
-                icon: Icons.admin_panel_settings_outlined,
-                title: 'Switch to Admin View',
-                iconColor: const Color(0xFF8A2BE2),
-                backgroundColor: const Color(0xFFF3E5F5),
+              Consumer<AdminModeNotifier>(
+                builder: (context, admin, _) {
+                  final isAdmin = admin.isAdminView;
+                  return _buildProfileListItem(
+                    icon: isAdmin
+                        ? Icons.person_outline
+                        : Icons.admin_panel_settings_outlined,
+                    title: isAdmin
+                        ? 'Switch to User View'
+                        : 'Switch to Admin View',
+                    iconColor: const Color(0xFF8A2BE2),
+                    backgroundColor: const Color(0xFFF3E5F5),
+                    onTap: () {
+                      admin.toggle();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            admin.isAdminView
+                                ? 'Admin view on — you can manage your listings.'
+                                : 'User view on — browse only.',
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
               const SizedBox(height: 16),
               _buildProfileListItem(

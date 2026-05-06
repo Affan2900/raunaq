@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+import 'package:raunaq/state/admin_mode_notifier.dart';
 import 'package:raunaq/home_screen.dart';
 import 'package:raunaq/login_page.dart';
 import 'firebase_options.dart'; // This was generated in Step 3
@@ -35,7 +37,12 @@ void main() async {
     );
   }
 
-  runApp(const RaunaqApp());
+  runApp(
+    ChangeNotifierProvider<AdminModeNotifier>(
+      create: (_) => AdminModeNotifier(),
+      child: const RaunaqApp(),
+    ),
+  );
 }
 
 class RaunaqApp extends StatelessWidget {
