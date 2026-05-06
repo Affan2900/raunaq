@@ -143,11 +143,11 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _menuItem({
+  Widget _buildProfileListItem({
     required IconData icon,
     required String title,
     required Color iconColor,
-    required Color bgColor,
+    required Color backgroundColor,
     Color textColor = Colors.black87,
     bool isDestructive = false,
     VoidCallback? onTap,

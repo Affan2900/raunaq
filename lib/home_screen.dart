@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:raunaq/profile_page.dart';
-import 'package:raunaq/messages_screen.dart';
+import 'package:raunaq/conversations_screen.dart';
+import 'package:raunaq/vendor_dashboard_screen.dart';
+import 'package:raunaq/vendor_detail_screen.dart';
+import 'package:raunaq/vendor_list_screen.dart';
 import 'package:raunaq/venues_screen.dart';
 import 'package:raunaq/catering_screen.dart';
 import 'package:raunaq/photography_screen.dart';
@@ -21,6 +24,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   int _hoveredIndex = -1;
+  /// Loaded from Firestore in a follow-up; `'vendor'` shows vendor dashboard.
+  final String _userRole = 'user';
 
   /// First name for greeting: [User.displayName], else email local-part, else fallback.
   String _firstNameFromUser(User? user) {
@@ -194,24 +199,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     );
                   },
-                // Hero banner
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(color: primaryColor, borderRadius: BorderRadius.circular(16)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Hi, $_firstName! 👋',
-                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500)),
-                      const SizedBox(height: 6),
-                      const Text('Plan Your Dream Event',
-                          style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      const Text('Everything you need in one place',
-                          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
-                    ],
-                  ),
                 ),
                 const SizedBox(height: 24),
 
@@ -405,7 +392,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-}
 
   Widget _buildAddPlanCard(BuildContext context) {
     const primaryColor = Color(0xFF00A2FF);
@@ -441,7 +427,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(Icons.add, size: 44, color: primaryColor),
             const SizedBox(height: 10),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 'New plan',
                 textAlign: TextAlign.center,
@@ -450,7 +436,103 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.w600,
                   color: primaryColor,
                 ),
-/// Reads top 4 vendors from Firestore and shows as horizontal cards
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrentPlanCard(
+    BuildContext context, {
+    required String planId,
+    required String planName,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push<void>(
+          context,
+          MaterialPageRoute<void>(
+            builder: (context) => EventPlanDetailScreen(planId: planId),
+          ),
+        );
+      },
+      child: Container(
+        width: 200,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF89CFF0),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: const Center(
+                  child: Text('📋', style: TextStyle(fontSize: 32)),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    planName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        size: 16,
+                        color: Colors.green[700],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Active',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Featured vendors from Firestore (horizontal list).
 class _FeaturedVendorsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -490,8 +572,6 @@ class _FeaturedCard extends StatelessWidget {
   const _FeaturedCard({required this.vendorId, required this.data});
   final String vendorId;
   final Map<String, dynamic> data;
-
-  static const primaryColor = Color(0xFF00A2FF);
 
   @override
   Widget build(BuildContext context) {
@@ -543,176 +623,6 @@ class _FeaturedCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildCurrentPlanCard(
-    BuildContext context, {
-    required String planId,
-    required String planName,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push<void>(
-          context,
-          MaterialPageRoute<void>(
-            builder: (context) => EventPlanDetailScreen(planId: planId),
-          ),
-        );
-      },
-      child: Container(
-      width: 200,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Color(0xFF89CFF0),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-              ),
-              child: const Center(
-                child: Text('📋', style: TextStyle(fontSize: 32)),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  planName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle_outline,
-                      size: 16,
-                      color: Colors.green[700],
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Active',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      ),
-    );
-  }
-
-  Widget _buildRecommendedCard(String title, String rating, String price) {
-    return Container(
-      width: 200,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04), // Soft shadow
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image placeholder
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Color(0xFF89CFF0), // Light blue placeholder
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-              ),
-              child: const Center(
-                child: Text('📷', style: TextStyle(fontSize: 32)),
-              ),
-            ),
-          ),
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          rating,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      price,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
