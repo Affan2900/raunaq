@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:raunaq/home_screen.dart';
@@ -14,6 +15,69 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _isSendingReset = false;
+
+  bool _looksLikeEmail(String value) {
+    return value.contains('@') && value.contains('.');
+  }
+
+  Future<void> _sendPasswordReset() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter your email address above first.'),
+        ),
+      );
+      return;
+    }
+    if (!_looksLikeEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid email address.')),
+      );
+      return;
+    }
+
+    setState(() => _isSendingReset = true);
+    try {
+      if (kIsWeb) {
+        final origin = Uri.base.origin;
+        final continueUrl =
+            origin.endsWith('/') ? origin : '$origin/';
+        await FirebaseAuth.instance.sendPasswordResetEmail(
+          email: email,
+          actionCodeSettings: ActionCodeSettings(
+            url: continueUrl,
+            handleCodeInApp: false,
+          ),
+        );
+      } else {
+        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Check your email for a link to reset your password.',
+          ),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = 'Could not send reset email.';
+      if (e.code == 'invalid-email') {
+        message = 'That email address is not valid.';
+      } else if (e.code == 'user-not-found') {
+        message = 'No account found for that email.';
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSendingReset = false);
+    }
+  }
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
@@ -216,19 +280,29 @@ class _LoginPageState extends State<LoginPage> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed:
+                              (_isLoading || _isSendingReset) ? null : _sendPasswordReset,
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: const Size(50, 30),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text(
-                            'Forgot Password?',
-                            style: TextStyle(
-                              color: primaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          child: _isSendingReset
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: primaryColor,
+                                  ),
+                                )
+                              : const Text(
+                                  'Forgot Password?',
+                                  style: TextStyle(
+                                    color: primaryColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
                       ),
 

@@ -7,7 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:raunaq/home_screen.dart';
 import 'package:raunaq/login_page.dart';
 import 'firebase_options.dart'; // This was generated in Step 3
-import 'splash_screen.dart'; // The new splash screen
+import 'auth_entry.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,7 +50,7 @@ class RaunaqApp extends StatelessWidget {
         primaryColor: const Color(0xFF00A2FF),
         useMaterial3: true,
       ),
-      home: const SplashScreen(),
+      home: const AuthEntry(),
     );
   }
 }
