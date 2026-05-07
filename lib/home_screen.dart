@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:raunaq/explore_all_screen.dart';
 import 'package:raunaq/profile_page.dart';
 import 'package:raunaq/conversations_screen.dart';
 import 'package:raunaq/vendor_dashboard_screen.dart';
 import 'package:raunaq/vendor_detail_screen.dart';
-import 'package:raunaq/vendor_list_screen.dart';
 import 'package:raunaq/venues_screen.dart';
 import 'package:raunaq/catering_screen.dart';
 import 'package:raunaq/photography_screen.dart';
@@ -307,11 +307,19 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _selectedIndex,
         onTap: (index) {
           if (index == 1) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const VendorListScreen(category: 'all')));
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (_) => const ExploreAllScreen(),
+              ),
+            );
           } else if (index == 2) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const VendorListScreen(category: 'all')));
-          } else if (index == 3) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ConversationsScreen()));
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (_) => const ConversationsScreen(),
+              ),
+            );
           } else {
             setState(() => _selectedIndex = index);
           }
@@ -325,10 +333,21 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
         elevation: 10,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work), label: 'Vendors'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Explore'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), activeIcon: Icon(Icons.chat_bubble), label: 'Messages'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            activeIcon: Icon(Icons.search),
+            label: 'Explore',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble),
+            label: 'Messages',
+          ),
         ],
       ),
     );
@@ -555,7 +574,7 @@ class _FeaturedVendorsList extends StatelessWidget {
           return ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: snapshot.data!.docs.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            separatorBuilder: (context, index) => const SizedBox(width: 16),
             itemBuilder: (context, i) {
               final doc = snapshot.data!.docs[i];
               final data = doc.data() as Map<String, dynamic>;
