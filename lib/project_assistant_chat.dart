@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
-import 'package:raunaq/faq_openai_service.dart';
+import 'package:raunaq/openrouter_chat_service.dart';
 
-/// In-app assistant: static [assets/faq_knowledge.md] + OpenAI (Callable or `.env` key).
+/// In-app assistant: static [assets/faq_knowledge.md] + OpenRouter (Callable or `.env` key).
 /// Intended as the body of a parent [Scaffold] (no own AppBar).
 class ProjectAssistantChat extends StatefulWidget {
   const ProjectAssistantChat({super.key});
@@ -109,7 +109,7 @@ ${_faqKnowledge.isEmpty ? '(FAQ file missing)' : _faqKnowledge}
     _scrollToBottom();
 
     try {
-      final reply = await FaqOpenAiService.completeChat(
+      final reply = await OpenRouterChatService.completeChat(
         systemContent: _buildSystemPrompt(),
         apiMessages: _apiMessagesFromBubbles(),
       );
@@ -127,8 +127,8 @@ ${_faqKnowledge.isEmpty ? '(FAQ file missing)' : _faqKnowledge}
           _ChatBubble(
             text:
                 'Sorry, I could not get an answer ($e). '
-                'If you are on web, use a Firebase Callable `faqChat` or configure '
-                'development keys safely.',
+                'If you are on web, use a Firebase Callable `faqChat` or set '
+                'OPENROUTER_API_KEY in .env for local dev only.',
             isUser: false,
           ),
         );

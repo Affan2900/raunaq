@@ -5,10 +5,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
-/// Calls Cloud Function [faqChat] when deployed; otherwise OpenAI directly using
-/// [OPENAI_API_KEY] (development only — exposes key on web builds).
-class FaqOpenAiService {
-  FaqOpenAiService._();
+/// Chat completions via [OpenRouter](https://openrouter.ai/docs).
+///
+/// Tries Firebase Callable [faqChat] first when deployed; otherwise calls
+/// OpenRouter directly using [OPENROUTER_API_KEY] (development only — unsafe on
+/// public web builds; prefer a backend or Callable in production).
+class OpenRouterChatService {
+  OpenRouterChatService._();
+
+  static const _openRouterUrl =
+      'https://openrouter.ai/api/v1/chat/completions';
 
   /// [apiMessages] must be alternating user/assistant turns (no system message).
   static Future<String> completeChat({
@@ -35,18 +41,19 @@ class FaqOpenAiService {
       // Callable not deployed or wrong region — fall through.
     }
 
-    final key = dotenv.env['OPENAI_API_KEY']?.trim() ?? '';
+    final key = dotenv.env['OPENROUTER_API_KEY']?.trim() ?? '';
     if (key.isEmpty) {
       throw StateError(
-        'FAQ unavailable: deploy Firebase Callable `faqChat`, or set OPENAI_API_KEY '
-        'in .env for local development only (never ship API keys in web clients).',
+        'Assistant unavailable: deploy Firebase Callable `faqChat`, or set '
+        'OPENROUTER_API_KEY in .env for local development only (never ship API '
+        'keys in web clients).',
       );
     }
 
-    final modelEnv = dotenv.env['OPENAI_FAQ_MODEL']?.trim();
+    final modelEnv = dotenv.env['OPENROUTER_MODEL']?.trim();
     final model = (modelEnv != null && modelEnv.isNotEmpty)
         ? modelEnv
-        : 'gpt-4o-mini';
+        : 'openai/gpt-4o-mini';
 
     final payload = <String, dynamic>{
       'model': model,
@@ -56,25 +63,36 @@ class FaqOpenAiService {
       ],
     };
 
+    final headers = <String, String>{
+      'Authorization': 'Bearer $key',
+      'Content-Type': 'application/json',
+    };
+    final referer = dotenv.env['OPENROUTER_HTTP_REFERER']?.trim();
+    if (referer != null && referer.isNotEmpty) {
+      headers['HTTP-Referer'] = referer;
+    }
+    final appName = dotenv.env['OPENROUTER_APP_NAME']?.trim();
+    if (appName != null && appName.isNotEmpty) {
+      headers['X-Title'] = appName;
+    }
+
     final resp = await http.post(
-      Uri.parse('https://api.openai.com/v1/chat/completions'),
-      headers: {
-        'Authorization': 'Bearer $key',
-        'Content-Type': 'application/json',
-      },
+      Uri.parse(_openRouterUrl),
+      headers: headers,
       body: jsonEncode(payload),
     );
 
     if (resp.statusCode != 200) {
       throw Exception(
-        'OpenAI HTTP ${resp.statusCode}: ${resp.body.length > 200 ? resp.body.substring(0, 200) : resp.body}',
+        'OpenRouter HTTP ${resp.statusCode}: '
+        '${resp.body.length > 200 ? resp.body.substring(0, 200) : resp.body}',
       );
     }
 
     final json = jsonDecode(resp.body) as Map<String, dynamic>;
     final choices = json['choices'] as List<dynamic>?;
     if (choices == null || choices.isEmpty) {
-      throw Exception('Empty choices from OpenAI');
+      throw Exception('Empty choices from OpenRouter');
     }
     final msg = choices.first as Map<String, dynamic>;
     final message = msg['message'] as Map<String, dynamic>?;
