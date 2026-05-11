@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,23 +15,66 @@ import 'auth_entry.dart';
 /// Set when [.env] load, Firebase init, or validation fails — avoids a blank/black screen in release.
 Object? _bootstrapError;
 
+void _validateFirebaseEnv() {
+  String r(String k) => dotenv.env[k]?.trim() ?? '';
+
+  if (kIsWeb) {
+    if (r('FIREBASE_WEB_API_KEY').isEmpty || r('FIREBASE_PROJECT_ID').isEmpty) {
+      throw StateError(
+        'Web Firebase config is missing. Add FIREBASE_WEB_API_KEY and FIREBASE_PROJECT_ID '
+        '(and other keys) to your project root `.env`. See `.env.example` and copy values '
+        'from Firebase Console → Project settings → General → Your apps → Web.',
+      );
+    }
+    return;
+  }
+
+  switch (defaultTargetPlatform) {
+    case TargetPlatform.android:
+      if (r('FIREBASE_ANDROID_API_KEY').isEmpty ||
+          r('FIREBASE_ANDROID_APP_ID').isEmpty ||
+          r('FIREBASE_PROJECT_ID').isEmpty) {
+        throw StateError(
+          'Android Firebase config is missing. Set FIREBASE_ANDROID_API_KEY, '
+          'FIREBASE_ANDROID_APP_ID, and FIREBASE_PROJECT_ID in `.env`. '
+          'See `.env.example` (Firebase Console → Your apps → Android).',
+        );
+      }
+      return;
+    case TargetPlatform.iOS:
+    case TargetPlatform.macOS:
+      if (r('FIREBASE_IOS_API_KEY').isEmpty ||
+          r('FIREBASE_IOS_APP_ID').isEmpty ||
+          r('FIREBASE_PROJECT_ID').isEmpty) {
+        throw StateError(
+          'iOS/macOS Firebase config is missing. Set FIREBASE_IOS_API_KEY, '
+          'FIREBASE_IOS_APP_ID, and FIREBASE_PROJECT_ID in `.env`. '
+          'See `.env.example` (Firebase Console → Your apps → Apple).',
+        );
+      }
+      return;
+    case TargetPlatform.windows:
+      if (r('FIREBASE_WEB_API_KEY').isEmpty ||
+          r('FIREBASE_WEB_APP_ID').isEmpty ||
+          r('FIREBASE_PROJECT_ID').isEmpty) {
+        throw StateError(
+          'Windows Firebase config is missing. Register a Web app in Firebase and set '
+          'FIREBASE_WEB_API_KEY, FIREBASE_WEB_APP_ID, and FIREBASE_PROJECT_ID in `.env`. '
+          'See `.env.example`.',
+        );
+      }
+      return;
+    default:
+      return;
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
     await dotenv.load(fileName: '.env');
-
-    if (kIsWeb) {
-      final apiKey = dotenv.env['FIREBASE_WEB_API_KEY']?.trim() ?? '';
-      final projectId = dotenv.env['FIREBASE_PROJECT_ID']?.trim() ?? '';
-      if (apiKey.isEmpty || projectId.isEmpty) {
-        throw StateError(
-          'Web Firebase config is missing. Add FIREBASE_WEB_API_KEY and FIREBASE_PROJECT_ID '
-          '(and other keys) to your project root `.env`. See `.env.example` and copy values '
-          'from Firebase Console → Project settings → General → Your apps → Web.',
-        );
-      }
-    }
+    _validateFirebaseEnv();
 
     await _initializeFirebaseApp();
 
@@ -100,9 +144,9 @@ class BootstrapFailureApp extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    'Check that .env is listed under flutter assets in pubspec.yaml, '
-                    'includes all Firebase keys for Android, was present when you ran '
-                    'flutter build apk, and matches google-services.json.',
+                    'Check that `.env` is listed under flutter assets in pubspec.yaml, '
+                    'that you copied `.env.example` to `.env`, and that all keys for your '
+                    'target platform are filled in (see error above).',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ],

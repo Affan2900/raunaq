@@ -46,6 +46,15 @@ app.*.map.json
 /android/app/release
 
 .env
+.env.local
+.env.*.local
 
-# Firebase (download from Firebase Console per machine/CI)
+# Firebase / Google Cloud — local or machine-specific (public repo)
 /android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+/macos/Runner/GoogleService-Info.plist
+.firebase/
+
+# Service account private keys (Admin SDK, CI); never commit
+**/*firebase-adminsdk*.json
+**/serviceAccount*.json
