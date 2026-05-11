@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:raunaq/openrouter_chat_service.dart';
 
-/// In-app assistant: static [assets/faq_knowledge.md] + OpenRouter (Callable or `.env` key).
+/// In-app assistant: optional FastAPI proxy ([FAQ_ASSISTANT_BASE_URL]), else FAQ asset +
+/// OpenRouter or Firebase Callable.
 /// Intended as the body of a parent [Scaffold] (no own AppBar).
 class ProjectAssistantChat extends StatefulWidget {
   const ProjectAssistantChat({super.key});
@@ -31,9 +33,17 @@ class _ProjectAssistantChatState extends State<ProjectAssistantChat> {
   String? _assetError;
   bool _assetErrorDismissed = false;
 
+  /// FAQ answers come from [FAQ_ASSISTANT_BASE_URL] backend; embedded FAQ optional.
+  late final bool _backendConfigured;
+
+  bool get _canCompose =>
+      !_loadingAsset && (_faqKnowledge.isNotEmpty || _backendConfigured);
+
   @override
   void initState() {
     super.initState();
+    _backendConfigured =
+        dotenv.env['FAQ_ASSISTANT_BASE_URL']?.trim().isNotEmpty ?? false;
     _loadFaqAsset();
   }
 
@@ -57,7 +67,20 @@ class _ProjectAssistantChatState extends State<ProjectAssistantChat> {
       if (!mounted) return;
       setState(() {
         _loadingAsset = false;
-        _assetError = '$e';
+        if (_backendConfigured) {
+          _assetError =
+              'Could not load embedded FAQ ($e). The assistant still uses your backend.';
+          _bubbles.add(
+            _ChatBubble(
+              text:
+                  'Hi! I can help you use Raunaq — navigation, profiles, admin view, '
+                  'and vendor chats. What would you like to know?',
+              isUser: false,
+            ),
+          );
+        } else {
+          _assetError = '$e';
+        }
       });
     }
   }
@@ -96,9 +119,32 @@ ${_faqKnowledge.isEmpty ? '(FAQ file missing)' : _faqKnowledge}
     return out;
   }
 
+  /// History before the current user message (for FastAPI `/chat`).
+  List<Map<String, String>> _priorMessagesForProxy(String currentQuery) {
+    final relevant = _bubbles.where((b) => b.text != '…').toList();
+    if (relevant.isEmpty) return [];
+    if (relevant.last.isUser && relevant.last.text == currentQuery) {
+      relevant.removeLast();
+    }
+    const maxMessages = 16;
+    var start = 0;
+    if (relevant.length > maxMessages) {
+      start = relevant.length - maxMessages;
+    }
+    final out = <Map<String, String>>[];
+    for (var i = start; i < relevant.length; i++) {
+      final b = relevant[i];
+      out.add({
+        'role': b.isUser ? 'user' : 'assistant',
+        'content': b.text,
+      });
+    }
+    return out;
+  }
+
   Future<void> _send() async {
     final q = _inputController.text.trim();
-    if (q.isEmpty || _loadingAsset || _faqKnowledge.isEmpty) return;
+    if (q.isEmpty || _loadingAsset || !_canCompose) return;
 
     setState(() {
       _bubbles.add(_ChatBubble(text: q, isUser: true));
@@ -110,6 +156,8 @@ ${_faqKnowledge.isEmpty ? '(FAQ file missing)' : _faqKnowledge}
 
     try {
       final reply = await OpenRouterChatService.completeChat(
+        currentQuery: q,
+        priorMessages: _priorMessagesForProxy(q),
         systemContent: _buildSystemPrompt(),
         apiMessages: _apiMessagesFromBubbles(),
       );
@@ -127,8 +175,8 @@ ${_faqKnowledge.isEmpty ? '(FAQ file missing)' : _faqKnowledge}
           _ChatBubble(
             text:
                 'Sorry, I could not get an answer ($e). '
-                'If you are on web, use a Firebase Callable `faqChat` or set '
-                'OPENROUTER_API_KEY in .env for local dev only.',
+                'Check FAQ_ASSISTANT_BASE_URL / device network, or set OPENROUTER_API_KEY '
+                'for direct OpenRouter fallback.',
             isUser: false,
           ),
         );
@@ -228,9 +276,7 @@ ${_faqKnowledge.isEmpty ? '(FAQ file missing)' : _faqKnowledge}
                     controller: _inputController,
                     minLines: 1,
                     maxLines: 4,
-                    enabled: !_loadingAsset &&
-                        _faqKnowledge.isNotEmpty &&
-                        !_sending,
+                    enabled: _canCompose && !_sending,
                     decoration: InputDecoration(
                       hintText: 'Ask about using Raunaq…',
                       filled: true,
@@ -254,11 +300,8 @@ ${_faqKnowledge.isEmpty ? '(FAQ file missing)' : _faqKnowledge}
                     backgroundColor: _primaryColor,
                     foregroundColor: Colors.white,
                   ),
-                  onPressed: _loadingAsset ||
-                          _faqKnowledge.isEmpty ||
-                          _sending
-                      ? null
-                      : _send,
+                  onPressed:
+                      !_canCompose || _sending ? null : _send,
                   icon: const Icon(Icons.send_rounded),
                 ),
               ],

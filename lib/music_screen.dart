@@ -317,7 +317,15 @@ class _MusicScreenState extends State<MusicScreen> {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError)
-                  return const Center(child: Text('Error loading data'));
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        'Could not load listings.\n${snapshot.error}',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
                 if (snapshot.connectionState == ConnectionState.waiting)
                   return const Center(child: CircularProgressIndicator());
                 final docs = snapshot.data!.docs;

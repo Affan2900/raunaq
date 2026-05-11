@@ -5,22 +5,35 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
-/// Chat completions via [OpenRouter](https://openrouter.ai/docs).
-///
-/// Tries Firebase Callable [faqChat] first when deployed; otherwise calls
-/// OpenRouter directly using [OPENROUTER_API_KEY] (development only — unsafe on
-/// public web builds; prefer a backend or Callable in production).
+/// FAQ assistant: FastAPI proxy ([FAQ_ASSISTANT_BASE_URL]), then Firebase Callable
+/// [faqChat], then direct [OpenRouter](https://openrouter.ai/docs) with
+/// [OPENROUTER_API_KEY] (dev only — unsafe on public web clients).
 class OpenRouterChatService {
   OpenRouterChatService._();
 
   static const _openRouterUrl =
       'https://openrouter.ai/api/v1/chat/completions';
 
-  /// [apiMessages] must be alternating user/assistant turns (no system message).
+  /// Completes the user's message.
+  ///
+  /// When [FAQ_ASSISTANT_BASE_URL] is set, calls `POST {base}/chat` with
+  /// `{"query": [currentQuery], "messages": [priorMessages]}` and reads `reply`.
+  /// Otherwise uses [systemContent] + [apiMessages] for Callable / OpenRouter.
+  ///
+  /// [priorMessages] must exclude the current user turn (history only).
+  /// [apiMessages] must include the full visible thread including the latest user
+  /// message (for OpenRouter path).
   static Future<String> completeChat({
+    required String currentQuery,
+    required List<Map<String, String>> priorMessages,
     required String systemContent,
     required List<Map<String, String>> apiMessages,
   }) async {
+    final base = dotenv.env['FAQ_ASSISTANT_BASE_URL']?.trim() ?? '';
+    if (base.isNotEmpty) {
+      return _completeViaProxy(base, currentQuery, priorMessages);
+    }
+
     try {
       final callable = FirebaseFunctions.instanceFor(
         app: Firebase.app(),
@@ -44,9 +57,9 @@ class OpenRouterChatService {
     final key = dotenv.env['OPENROUTER_API_KEY']?.trim() ?? '';
     if (key.isEmpty) {
       throw StateError(
-        'Assistant unavailable: deploy Firebase Callable `faqChat`, or set '
-        'OPENROUTER_API_KEY in .env for local development only (never ship API '
-        'keys in web clients).',
+        'Assistant unavailable: set FAQ_ASSISTANT_BASE_URL, or deploy Firebase '
+        'Callable `faqChat`, or set OPENROUTER_API_KEY in .env for local dev '
+        '(never ship API keys in web clients).',
       );
     }
 
@@ -101,5 +114,58 @@ class OpenRouterChatService {
       throw Exception('Empty assistant content');
     }
     return content.trim();
+  }
+
+  static String _normalizeBaseUrl(String base) {
+    var b = base.trim();
+    while (b.endsWith('/')) {
+      b = b.substring(0, b.length - 1);
+    }
+    return b;
+  }
+
+  static Future<String> _completeViaProxy(
+    String base,
+    String currentQuery,
+    List<Map<String, String>> priorMessages,
+  ) async {
+    final url = Uri.parse('${_normalizeBaseUrl(base)}/chat');
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      // Avoid ngrok HTML interstitial on programmatic requests.
+      'ngrok-skip-browser-warning': '1',
+    };
+    final apiKey = dotenv.env['FAQ_ASSISTANT_API_KEY']?.trim() ?? '';
+    if (apiKey.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $apiKey';
+    }
+
+    final payload = <String, dynamic>{
+      'query': currentQuery.trim(),
+      'messages': priorMessages,
+    };
+
+    final resp = await http.post(
+      url,
+      headers: headers,
+      body: jsonEncode(payload),
+    );
+
+    if (resp.statusCode != 200) {
+      throw Exception(
+        'FAQ backend HTTP ${resp.statusCode}: '
+        '${resp.body.length > 200 ? resp.body.substring(0, 200) : resp.body}',
+      );
+    }
+
+    final json = jsonDecode(resp.body);
+    if (json is! Map<String, dynamic>) {
+      throw Exception('Unexpected FAQ backend response');
+    }
+    final reply = json['reply'];
+    if (reply is String && reply.trim().isNotEmpty) {
+      return reply.trim();
+    }
+    throw Exception('FAQ backend returned no reply');
   }
 }

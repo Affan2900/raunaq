@@ -46,3 +46,6 @@ app.*.map.json
 /android/app/release
 
 .env
+
+# Firebase (download from Firebase Console per machine/CI)
+/android/app/google-services.json

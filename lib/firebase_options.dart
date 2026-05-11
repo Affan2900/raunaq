@@ -5,6 +5,24 @@ import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
+/// Values from [android/app/google-services.json] (package `com.example.raunaq`) —
+/// used when [.env] omits or mis-types keys. Keep in sync when you replace the JSON.
+const String _gsAndroidApiKey =
+    'AIzaSyCrOx_ROhHWZpGWRlmYFGF--vZkXNcGtw0';
+const String _gsAndroidAppId =
+    '1:447099267570:android:7fbdf21d45ac9e65ee636b';
+const String _gsProjectId = 'mad-project-b0caf';
+const String _gsSenderId = '447099267570';
+const String _gsDatabaseUrl =
+    'https://mad-project-b0caf-default-rtdb.firebaseio.com';
+const String _gsStorageBucket = 'mad-project-b0caf.firebasestorage.app';
+
+String _envOr(String key, String fallback) {
+  final v = dotenv.env[key]?.trim();
+  if (v != null && v.isNotEmpty) return v;
+  return fallback;
+}
+
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
 /// Example:
@@ -58,58 +76,38 @@ class DefaultFirebaseOptions {
   );
 
   static FirebaseOptions android = FirebaseOptions(
-    apiKey: dotenv.env['FIREBASE_ANDROID_API_KEY'] ?? '',
-
-    appId: dotenv.env['FIREBASE_ANDROID_APP_ID'] ?? '',
-
-    messagingSenderId: dotenv.env['FIREBASE_SENDER_ID'] ?? '',
-
-    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
-
-    databaseURL: dotenv.env['FIREBASE_DATABASE_URL'] ?? '',
-
-    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
+    apiKey: _envOr('FIREBASE_ANDROID_API_KEY', _gsAndroidApiKey),
+    appId: _envOr('FIREBASE_ANDROID_APP_ID', _gsAndroidAppId),
+    messagingSenderId: _envOr('FIREBASE_SENDER_ID', _gsSenderId),
+    projectId: _envOr('FIREBASE_PROJECT_ID', _gsProjectId),
+    databaseURL: _envOr('FIREBASE_DATABASE_URL', _gsDatabaseUrl),
+    storageBucket: _envOr('FIREBASE_STORAGE_BUCKET', _gsStorageBucket),
   );
 
   static FirebaseOptions ios = FirebaseOptions(
-    apiKey: dotenv.env['FIREBASE_ANDROID_API_KEY'] ?? '',
-
-    appId: dotenv.env['FIREBASE_ANDROID_APP_ID'] ?? '',
-
-    messagingSenderId: dotenv.env['FIREBASE_SENDER_ID'] ?? '',
-
-    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
-
-    databaseURL: dotenv.env['FIREBASE_DATABASE_URL'] ?? '',
-
-    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
+    apiKey: _envOr('FIREBASE_ANDROID_API_KEY', _gsAndroidApiKey),
+    appId: _envOr('FIREBASE_ANDROID_APP_ID', _gsAndroidAppId),
+    messagingSenderId: _envOr('FIREBASE_SENDER_ID', _gsSenderId),
+    projectId: _envOr('FIREBASE_PROJECT_ID', _gsProjectId),
+    databaseURL: _envOr('FIREBASE_DATABASE_URL', _gsDatabaseUrl),
+    storageBucket: _envOr('FIREBASE_STORAGE_BUCKET', _gsStorageBucket),
   );
 
   static FirebaseOptions macos = FirebaseOptions(
-    apiKey: dotenv.env['FIREBASE_ANDROID_API_KEY'] ?? '',
-
-    appId: dotenv.env['FIREBASE_ANDROID_APP_ID'] ?? '',
-
-    messagingSenderId: dotenv.env['FIREBASE_SENDER_ID'] ?? '',
-
-    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
-
-    databaseURL: dotenv.env['FIREBASE_DATABASE_URL'] ?? '',
-
-    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
+    apiKey: _envOr('FIREBASE_ANDROID_API_KEY', _gsAndroidApiKey),
+    appId: _envOr('FIREBASE_ANDROID_APP_ID', _gsAndroidAppId),
+    messagingSenderId: _envOr('FIREBASE_SENDER_ID', _gsSenderId),
+    projectId: _envOr('FIREBASE_PROJECT_ID', _gsProjectId),
+    databaseURL: _envOr('FIREBASE_DATABASE_URL', _gsDatabaseUrl),
+    storageBucket: _envOr('FIREBASE_STORAGE_BUCKET', _gsStorageBucket),
   );
 
   static FirebaseOptions windows = FirebaseOptions(
-    apiKey: dotenv.env['FIREBASE_ANDROID_API_KEY'] ?? '',
-
-    appId: dotenv.env['FIREBASE_ANDROID_APP_ID'] ?? '',
-
-    messagingSenderId: dotenv.env['FIREBASE_SENDER_ID'] ?? '',
-
-    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
-
-    databaseURL: dotenv.env['FIREBASE_DATABASE_URL'] ?? '',
-
-    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
+    apiKey: _envOr('FIREBASE_ANDROID_API_KEY', _gsAndroidApiKey),
+    appId: _envOr('FIREBASE_ANDROID_APP_ID', _gsAndroidAppId),
+    messagingSenderId: _envOr('FIREBASE_SENDER_ID', _gsSenderId),
+    projectId: _envOr('FIREBASE_PROJECT_ID', _gsProjectId),
+    databaseURL: _envOr('FIREBASE_DATABASE_URL', _gsDatabaseUrl),
+    storageBucket: _envOr('FIREBASE_STORAGE_BUCKET', _gsStorageBucket),
   );
 }
